@@ -1,0 +1,216 @@
+
+
+
+.contactsPage {
+    padding: 24px;
+    background-color: #f9fafb;
+    
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+}
+
+.pageHeader {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.pageTitle {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 8px 0;
+}
+
+.pageSubtitle {
+    font-size: 1rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.errorText {
+    color: #ef4444;
+    font-weight: 500;
+}
+
+
+.tableContainer {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.contactTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.contactTable th,
+.contactTable td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: middle;
+}
+
+.contactTable th {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #4b5563;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background-color: #f9fafb;
+}
+
+.contactTable td {
+    font-size: 0.9rem;
+    color: #374151;
+}
+
+.contactTable tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+
+.newRow td {
+    font-weight: 600;
+    color: #111827;
+}
+
+.noDataText {
+    text-align: center;
+    color: #6b7280;
+    padding: 32px;
+    font-style: italic;
+}
+
+
+.statusBadge {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #ffffff;
+}
+
+
+.new {
+    background-color: #3b82f6;
+    
+}
+
+.read {
+    background-color: #8b5cf6;
+    
+}
+
+.replied {
+    background-color: #10b981;
+    
+}
+
+.closed {
+    background-color: #6b7280;
+    
+}
+
+.viewBtn {
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.viewBtn:hover {
+    background-color: #2563eb;
+}
+
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    max-width: 600px;
+    z-index: 1001;
+    overflow: hidden;
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modalHeader h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.closeBtn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #9ca3af;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.closeBtn:hover {
+    color: #111827;
+}
+
+.modalContent {
+    padding: 24px;
+    line-height: 1.6;
+}
+
+.modalContent p {
+    margin: 0 0 12px 0;
+    color: #374151;
+}
+
+.modalContent p strong {
+    color: #111827;
+    margin-right: 8px;
+}
+
+.modalContent hr {
+    border: 0;
+    height: 1px;
+    background-color: #e5e7eb;
+    margin: 16px 0;
+}
+
+.messageBody {
+    background-color: #f9fafb;
+    padding: 12px;
+    border-radius: 6px;
+    min-height: 100px;
+    white-space: pre-wrap;
+    
+}

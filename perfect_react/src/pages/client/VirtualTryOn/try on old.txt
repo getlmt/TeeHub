@@ -1,0 +1,403 @@
+import React, { useRef, useEffect, useState } from 'react';
+import { Camera, Settings, ZoomIn, Upload, ShoppingBag } from 'lucide-react';
+import './VirtualTryOn.css';
+import { productService } from '../../../services/productService';
+
+// === CẤU HÌNH ĐƯỜNG DẪN ẢNH ===
+// Đây là địa chỉ Frontend của bạn (nơi chứa thư mục public/Product)
+// Python Backend cần địa chỉ này để tải ảnh về xử lý.
+const FRONTEND_BASE_URL = 'http://localhost:5173';
+
+const VirtualTryOn = () => {
+  const videoRef = useRef(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [scale, setScale] = useState(0.6);
+  const [error, setError] = useState('');
+
+  // State quản lý đường dẫn áo
+  const [clothPath, setClothPath] = useState('./ao3.png'); // Mặc định vẫn giữ file local để test
+  const [customPath, setCustomPath] = useState('');
+
+  // State lưu danh sách sản phẩm từ Shop
+  const [shopProducts, setShopProducts] = useState([]);
+
+  // 1. LẤY DANH SÁCH SẢN PHẨM TỪ SHOP KHI VÀO TRANG
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        // Lấy 6 sản phẩm mới nhất để hiển thị
+        const response = await productService.getAllProducts(1, 6);
+        // Kiểm tra xem API trả về dạng Page (response.content) hay List (response)
+        const products = response.content || response || [];
+        setShopProducts(products);
+      } catch (err) {
+        console.error("Lỗi lấy sản phẩm shop:", err);
+      }
+    };
+
+    fetchProducts();
+
+    // Khởi tạo backend với áo mặc định
+    initializeBackend(clothPath);
+  }, []);
+
+  // 2. LOGIC KHỞI TẠO BACKEND (Gửi path hoặc URL sang Python)
+  const initializeBackend = async (path) => {
+    try {
+      const response = await fetch('http://localhost:5000/init', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cloth_path: path })
+      });
+      const data = await response.json();
+      if (data.status === 'success') {
+        setIsInitialized(true);
+        setError('');
+        setClothPath(path);
+        return true;
+      } else {
+        setError(data.message);
+        return false;
+      }
+    } catch (err) {
+      setError('Không thể kết nối đến server Python (Flask). Hãy chạy app.py!');
+      return false;
+    }
+  };
+
+  // 3. XỬ LÝ KHI CHỌN SẢN PHẨM TỪ SHOP
+  const handleSelectShopProduct = (product) => {
+    // Tên ảnh trong DB (ví dụ: "ao_thun.jpg")
+    const imageName = product.productMainImage;
+
+    if (!imageName) {
+      alert("Sản phẩm này không có ảnh!");
+      return;
+    }
+
+    // Tạo đường dẫn tuyệt đối để gửi sang Python
+    // Python cần: http://localhost:5173/Product/ten_anh.jpg
+    let fullUrlForBackend = imageName;
+    if (!imageName.startsWith('http')) {
+      fullUrlForBackend = `${FRONTEND_BASE_URL}/Product/${imageName}`;
+    }
+
+    // Cập nhật ô input để user thấy link
+    setCustomPath(fullUrlForBackend);
+
+    // Gọi hàm đổi áo
+    changeCloth(fullUrlForBackend);
+  };
+
+  // 4. HÀM ĐỔI ÁO CHUNG
+  const changeCloth = async (pathOverride = null) => {
+    const path = pathOverride || customPath;
+
+    if (!path) {
+      setError('Vui lòng chọn áo hoặc nhập đường dẫn!');
+      return;
+    }
+
+    // Nếu đang stream thì tạm dừng để backend load model mới
+    if (isStreaming) {
+      await stopStreaming();
+    }
+
+    const success = await initializeBackend(path);
+    if (success) {
+      setError('');
+      // Tự động bật lại stream nếu muốn (bỏ comment dòng dưới)
+      // await startStreaming();
+    }
+  };
+
+  // Bắt đầu streaming
+  const startStreaming = async () => {
+    if (!isInitialized) {
+      setError('Vui lòng khởi tạo áo trước!');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/start_stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await response.json();
+
+      if (data.status === 'success') {
+        setIsStreaming(true);
+        setError('');
+
+        if (videoRef.current) {
+          // Thêm timestamp để tránh cache trình duyệt
+          videoRef.current.src = `http://localhost:5000/video_feed?t=${Date.now()}`;
+        }
+      } else {
+        setError(data.message);
+      }
+    } catch (err) {
+      setError('Lỗi start stream: ' + err.message);
+    }
+  };
+
+  // Dừng streaming
+  const stopStreaming = async () => {
+    try {
+      await fetch('http://localhost:5000/stop_stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      setIsStreaming(false);
+      if (videoRef.current) {
+        videoRef.current.src = '';
+      }
+    } catch (err) {
+      setError('Lỗi stop stream: ' + err.message);
+    }
+  };
+
+  const toggleStreaming = () => {
+    if (isStreaming) {
+      stopStreaming();
+    } else {
+      startStreaming();
+    }
+  };
+
+  const updateSettings = async (newScale) => {
+    try {
+      await fetch('http://localhost:5000/update_settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scale: newScale })
+      });
+    } catch (err) {
+      console.error('Error updating settings:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (isInitialized) {
+      updateSettings(scale);
+    }
+  }, [scale]);
+
+  return (
+    <div className="virtual-tryon-container">
+      <div className="virtual-tryon-wrapper">
+        {/* Header */}
+        <div className="header">
+          <h1 className="header-title">
+            <Camera className="w-12 h-12" />
+            Virtual Try-On AI
+          </h1>
+          <p className="header-subtitle">Thử đồ trực tuyến với AI</p>
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="error-message">
+            <p className="error-title">⚠️ Thông báo:</p>
+            <p>{error}</p>
+          </div>
+        )}
+
+        {/* Main Content */}
+        <div className="main-grid">
+          {/* Video Display */}
+          <div>
+            <div className="video-panel">
+              <div className="video-container">
+                <img
+                  ref={videoRef}
+                  alt="Video Stream"
+                  className="video-stream"
+                  style={{ minHeight: '480px', background: '#000' }}
+                />
+
+                <div className={`status-badge ${isInitialized ? 'status-ready' : 'status-connecting'}`}>
+                  {isInitialized ? '✓ Áo đã sẵn sàng' : '⏳ Đang tải áo...'}
+                </div>
+
+                {isStreaming && (
+                  <div className="streaming-badge">
+                    <div className="pulse-dot"></div>
+                    LIVE
+                  </div>
+                )}
+              </div>
+
+              <div className="control-button-container">
+                <button
+                  onClick={toggleStreaming}
+                  disabled={!isInitialized}
+                  className={`control-button ${isStreaming ? 'streaming' : 'ready'}`}
+                >
+                  {isStreaming ? '⏸ Dừng Thử Đồ' : '▶ Bắt Đầu Thử Đồ'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Settings Panel */}
+          <div className="settings-container">
+
+            {/* --- PHẦN CHỌN SẢN PHẨM TỪ SHOP (MỚI) --- */}
+            <div className="panel">
+              <div className="panel-header">
+                <ShoppingBag className="w-6 h-6 text-blue-300" />
+                <h3 className="panel-title">Sản phẩm từ Shop</h3>
+              </div>
+
+              <div>
+                <div className="input-group">
+                  <label className="input-label">Chọn sản phẩm để thử:</label>
+
+                  {shopProducts.length === 0 ? (
+                    <p style={{ color: '#9ca3af', fontSize: '0.9rem', fontStyle: 'italic' }}>
+                      Đang tải danh sách sản phẩm...
+                    </p>
+                  ) : (
+                    <div className="quick-select-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                      {shopProducts.map((prod) => {
+                        // Xử lý đường dẫn ảnh để hiển thị trên Frontend
+                        const imgName = prod.productMainImage;
+                        let displayUrl = '/placeholder.png'; // Ảnh mặc định nếu lỗi
+
+                        if (imgName) {
+                          if (imgName.startsWith('http')) {
+                            displayUrl = imgName;
+                          } else {
+                            // Đường dẫn tương đối giống trang Product Detail
+                            displayUrl = `/Product/${imgName}`;
+                          }
+                        }
+
+                        const isSelected = clothPath.includes(imgName);
+
+                        return (
+                          <div
+                            key={prod.productId}
+                            className="product-item"
+                            onClick={() => handleSelectShopProduct(prod)}
+                            style={{
+                              cursor: 'pointer',
+                              textAlign: 'center',
+                              opacity: isStreaming ? 0.5 : 1 // Làm mờ khi đang stream để user biết cần dừng stream mới đổi được
+                            }}
+                            title={prod.productName}
+                          >
+                            <div style={{
+                              width: '100%',
+                              height: '90px',
+                              overflow: 'hidden',
+                              borderRadius: '8px',
+                              border: isSelected ? '3px solid #3b82f6' : '1px solid #374151',
+                              background: '#1f2937',
+                              transition: 'all 0.2s'
+                            }}>
+                              <img
+                                src={displayUrl}
+                                alt={prod.productName}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                onError={(e) => { e.target.src = 'https://via.placeholder.com/150?text=No+Image' }}
+                              />
+                            </div>
+                            <p style={{
+                              fontSize: '0.75rem',
+                              marginTop: '6px',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              color: isSelected ? '#60a5fa' : '#e5e7eb',
+                              fontWeight: isSelected ? 'bold' : 'normal'
+                            }}>
+                              {prod.productName}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Phần nhập link thủ công (Giữ lại để debug nếu cần) */}
+                <div className="input-group" style={{ marginTop: '1.5rem', borderTop: '1px solid #374151', paddingTop: '1rem' }}>
+                  <label className="input-label">Hoặc nhập link ảnh khác:</label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="text"
+                      value={customPath}
+                      onChange={(e) => setCustomPath(e.target.value)}
+                      placeholder="https://example.com/ao.png"
+                      className="text-input"
+                    />
+                    <button
+                      onClick={() => changeCloth(customPath)}
+                      disabled={!customPath || isStreaming}
+                      className={`change-button ${customPath && !isStreaming ? 'enabled' : 'disabled'}`}
+                      style={{ width: 'auto', padding: '0 12px' }}
+                    >
+                      🔄
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+            {/* --- HẾT PHẦN SHOP --- */}
+
+            {/* Scale Control */}
+            <div className="panel">
+              <div className="panel-header">
+                <Settings className="w-6 h-6 text-blue-300" />
+                <h3 className="panel-title">Điều chỉnh kích thước</h3>
+              </div>
+
+              <div className="slider-container">
+                <div className="slider-header">
+                  <label className="slider-label">
+                    <ZoomIn className="w-5 h-5" />
+                    Size áo:
+                  </label>
+                  <span className="slider-value">{Math.round(scale * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="1.2"
+                  step="0.05"
+                  value={scale}
+                  onChange={(e) => setScale(parseFloat(e.target.value))}
+                  className="slider"
+                />
+                <div className="slider-labels">
+                  <span>Nhỏ</span>
+                  <span>Vừa</span>
+                  <span>Lớn</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Guide */}
+            <div className="panel">
+              <h3 className="panel-title">📝 Hướng dẫn</h3>
+              <ul className="instruction-list">
+                <li>• Chọn áo từ danh sách bên trên.</li>
+                <li>• Bấm "Bắt Đầu Thử Đồ".</li>
+                <li>• Đứng cách xa camera khoảng 1.5m - 2m.</li>
+                <li>• Điều chỉnh thanh trượt để áo vừa vặn hơn.</li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default VirtualTryOn;

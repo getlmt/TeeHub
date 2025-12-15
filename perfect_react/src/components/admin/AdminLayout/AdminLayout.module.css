@@ -1,0 +1,102 @@
+.adminLayout {
+  display: flex;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+
+.sidebarWrapper {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1000;
+  transition: transform 0.3s ease;
+}
+
+
+.mainContent {
+  flex: 1;
+  margin-left: 280px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+
+.pageContent {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.contentWrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+
+.mobileOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: none;
+}
+
+
+@media (max-width: 1024px) {
+  .mainContent {
+    margin-left: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebarWrapper {
+    transform: translateX(-100%);
+  }
+
+  .sidebarWrapper.sidebarOpen {
+    transform: translateX(0);
+  }
+
+  .mainContent {
+    margin-left: 0;
+  }
+
+  .pageContent {
+    padding: 1rem;
+  }
+
+  .mobileOverlay {
+    display: block;
+  }
+}
+
+@media (max-width: 480px) {
+  .pageContent {
+    padding: 0.75rem;
+  }
+}
+
+
+.pageContent::-webkit-scrollbar {
+  width: 8px;
+}
+
+.pageContent::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.pageContent::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.pageContent::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+

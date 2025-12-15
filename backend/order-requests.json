@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Select all items (1 + 92)",
+    "request": {
+      "userId": 3,
+      "selectedItemIds": [1, 92],
+      "shippingAddressId": null,
+      "paymentTypeName": "COD",
+      "paymentProvider": "VNPost",
+      "paymentAccountNumber": null,
+      "paymentStatus": "Chưa thanh toán",
+      "shippingMethodName": "Giao hàng tiêu chuẩn",
+      "shippingPrice": 25000,
+      "orderTotal": null
+    }
+  },
+  {
+    "name": "Select first item only (id: 1 - custom product)",
+    "request": {
+      "userId": 3,
+      "selectedItemIds": [1],
+      "shippingAddressId": 1,
+      "paymentTypeName": "Thẻ tín dụng",
+      "paymentProvider": "VISA",
+      "paymentAccountNumber": "4111111111111111",
+      "paymentStatus": "Đã thanh toán",
+      "shippingMethodName": "Giao hàng nhanh",
+      "shippingPrice": 35000,
+      "orderTotal": null
+    }
+  },
+  {
+    "name": "Select last item only (id: 92 - with selectedOptions)",
+    "request": {
+      "userId": 3,
+      "selectedItemIds": [92],
+      "shippingAddressId": null,
+      "paymentTypeName": "COD",
+      "paymentProvider": "VNPost",
+      "paymentAccountNumber": null,
+      "paymentStatus": "Chưa thanh toán",
+      "shippingMethodName": "Giao hàng tiêu chuẩn",
+      "shippingPrice": 25000,
+      "orderTotal": null
+    }
+  }
+]
+
+
+

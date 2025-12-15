@@ -1,0 +1,202 @@
+{
+  "testCases": {
+    "test1_select_all_items": {
+      "description": "Chọn cả 2 items từ cart",
+      "request": {
+        "userId": 3,
+        "selectedItemIds": [1, 92],
+        "shippingAddressId": null,
+        "paymentTypeName": "COD",
+        "paymentProvider": "VNPost",
+        "paymentAccountNumber": null,
+        "paymentStatus": "Chưa thanh toán",
+        "shippingMethodName": "Giao hàng tiêu chuẩn",
+        "shippingPrice": 25000,
+        "orderTotal": null
+      },
+      "expectedTotal": "Cả 2 items: (190000 × 2) + (185000 × 3) = 380000 + 555000 = 935000 + 25000 (shipping) = 960000"
+    },
+    "test2_select_first_item_only": {
+      "description": "Chọn chỉ item đầu (id: 1) - custom product",
+      "request": {
+        "userId": 3,
+        "selectedItemIds": [1],
+        "shippingAddressId": 1,
+        "paymentTypeName": "Thẻ tín dụng",
+        "paymentProvider": "VISA",
+        "paymentAccountNumber": "4111111111111111",
+        "paymentStatus": "Đã thanh toán",
+        "shippingMethodName": "Giao hàng nhanh",
+        "shippingPrice": 35000,
+        "orderTotal": null
+      },
+      "expectedTotal": "Item 1: 190000 × 2 = 380000 + 35000 (shipping) = 415000"
+    },
+    "test3_select_last_item_only": {
+      "description": "Chọn chỉ item cuối (id: 92) - có selectedOptions",
+      "request": {
+        "userId": 3,
+        "selectedItemIds": [92],
+        "shippingAddressId": null,
+        "paymentTypeName": "COD",
+        "paymentProvider": "VNPost",
+        "paymentAccountNumber": null,
+        "paymentStatus": "Chưa thanh toán",
+        "shippingMethodName": "Giao hàng tiêu chuẩn",
+        "shippingPrice": 25000,
+        "orderTotal": null
+      },
+      "expectedTotal": "Item 92: 185000 × 3 = 555000 + 25000 (shipping) = 580000",
+      "note": "Item này có selectedOptions: [Trắng, XXL] nên response phải có đầy đủ selectedOptions"
+    },
+    "test4_with_custom_total": {
+      "description": "Test với orderTotal được chỉ định sẵn",
+      "request": {
+        "userId": 3,
+        "selectedItemIds": [92],
+        "shippingAddressId": null,
+        "paymentTypeName": "Bank Transfer",
+        "paymentProvider": "Vietcombank",
+        "paymentAccountNumber": "1234567890",
+        "paymentStatus": "Chưa thanh toán",
+        "shippingMethodName": "Giao hàng tiêu chuẩn",
+        "shippingPrice": 25000,
+        "orderTotal": 600000
+      },
+      "note": "orderTotal được chỉ định nên sẽ dùng giá trị này thay vì tự tính"
+    }
+  },
+  "testCases_edge_cases": {
+    "test5_duplicate_ids": {
+      "description": "Test với duplicate IDs (sẽ được remove tự động)",
+      "request": {
+        "userId": 3,
+        "selectedItemIds": [92, 92, 92],
+        "shippingAddressId": null,
+        "paymentTypeName": "COD",
+        "paymentProvider": "VNPost",
+        "paymentAccountNumber": null,
+        "paymentStatus": "Chưa thanh toán",
+        "shippingMethodName": "Giao hàng tiêu chuẩn",
+        "shippingPrice": 25000,
+        "orderTotal": null
+      },
+      "expectedBehavior": "Duplicate sẽ được remove, chỉ xử lý 1 lần item id 92"
+    },
+    "test6_empty_selectedItems": {
+      "description": "Test validation - selectedItemIds empty (should fail)",
+      "request": {
+        "userId": 3,
+        "selectedItemIds": [],
+        "shippingAddressId": null,
+        "paymentTypeName": "COD",
+        "paymentProvider": "VNPost",
+        "paymentAccountNumber": null,
+        "paymentStatus": "Chưa thanh toán",
+        "shippingMethodName": "Giao hàng tiêu chuẩn",
+        "shippingPrice": 25000,
+        "orderTotal": null
+      },
+      "expectedError": "InvalidDataException: selectedItemIds must not be empty"
+    },
+    "test7_null_userId": {
+      "description": "Test validation - userId null (should fail)",
+      "request": {
+        "userId": null,
+        "selectedItemIds": [92],
+        "shippingAddressId": null,
+        "paymentTypeName": "COD",
+        "paymentProvider": "VNPost",
+        "paymentAccountNumber": null,
+        "paymentStatus": "Chưa thanh toán",
+        "shippingMethodName": "Giao hàng tiêu chuẩn",
+        "shippingPrice": 25000,
+        "orderTotal": null
+      },
+      "expectedError": "InvalidDataException: userId is required"
+    },
+    "test8_wrong_ownership": {
+      "description": "Test security - cart item không thuộc về user (should fail)",
+      "request": {
+        "userId": 3,
+        "selectedItemIds": [999],
+        "shippingAddressId": null,
+        "paymentTypeName": "COD",
+        "paymentProvider": "VNPost",
+        "paymentAccountNumber": null,
+        "paymentStatus": "Chưa thanh toán",
+        "shippingMethodName": "Giao hàng tiêu chuẩn",
+        "shippingPrice": 25000,
+        "orderTotal": null
+      },
+      "expectedError": "InvalidDataException: Cart item 999 does not belong to user 3 hoặc ResourceNotFoundException"
+    }
+  },
+  "endpoint": "POST /api/orders/add",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "notes": {
+    "cart_items": {
+      "item_1": {
+        "id": 1,
+        "cartId": 1,
+        "productItemId": 1,
+        "qty": 2,
+        "price": 190000,
+        "is_customed": true,
+        "custom_id": 1,
+        "selectedOptions": []
+      },
+      "item_92": {
+        "id": 92,
+        "cartId": 1,
+        "productItemId": 5,
+        "qty": 3,
+        "price": 185000,
+        "is_customed": false,
+        "custom_id": null,
+        "selectedOptions": [
+          {"id": 1, "variationId": 1, "value": "Trắng"},
+          {"id": 14, "variationId": 2, "value": "XXL"}
+        ]
+      }
+    },
+    "validation_checks": [
+      "userId không null",
+      "selectedItemIds không null/empty",
+      "Cart items phải thuộc về user",
+      "Price không null",
+      "Duplicate items sẽ bị remove tự động"
+    ],
+    "expected_response_structure": {
+      "id": "integer - order ID",
+      "userId": 3,
+      "paymentTypeName": "string",
+      "paymentProvider": "string",
+      "paymentAccountNumber": "string hoặc null",
+      "paymentStatus": "string",
+      "paymentDate": "Instant hoặc null",
+      "shippingMethodName": "string",
+      "shippingPrice": "BigDecimal",
+      "orderStatus": "string",
+      "orderDate": "Instant",
+      "orderTotal": "BigDecimal",
+      "items": [
+        {
+          "id": "integer - orderLine ID",
+          "productItemId": "integer",
+          "qty": "integer",
+          "price": "integer",
+          "productImage": "string",
+          "is_customed": "boolean",
+          "custom_id": "integer hoặc null",
+          "selectedOptions": "array (có thể rỗng nhưng không null)"
+        }
+      ]
+    }
+  }
+}
+
+
+

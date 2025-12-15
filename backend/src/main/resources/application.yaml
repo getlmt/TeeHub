@@ -1,0 +1,80 @@
+spring:
+  application:
+    name: store
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: 123
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      schema: ecommerce
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        default_schema: ecommerce
+
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+  security:
+    oauth2:
+      client:
+        registration:
+          # Cấu hình Facebook
+          facebook:
+            client-id: "1893277838246742"
+            client-secret: "d0123a3979bac400b197d5cdfb141ddc"
+            client-authentication-method: client_secret_post
+            scope:
+              # - email
+              - public_profile
+            redirect-uri: "http://localhost:8080/login/oauth2/code/facebook"
+
+          google:
+            client-id: "1050236703714-gar3ms8fh2uj3rkh1lvomb8brhs1e87o.apps.googleusercontent.com"
+            client-secret: "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"
+            scope:
+                - email
+                - profile
+            redirect-uri: "http://localhost:8080/login/oauth2/code/google"
+          github:
+            client-id: "Ov23liUw1FkXHDiXUlZL"
+            client-secret: "4fca790eafd3a9be851ff5c99bb27e406ff2ebc3"
+            client-authentication-method: client_secret_basic
+            scope:
+              - read:user
+              - user:email
+            redirect-uri: "http://localhost:8080/login/oauth2/code/github"
+
+server:
+  port: 8080
+
+app:
+  jwt:
+    secret: "p6n8fBq7Yw7o2C0l3o2yQm1nq2VqV8yDk2Z9h3lE5yI="
+    expiration-milliseconds: 86400000
+
+  oauth2:
+    authorized-redirect-uris: http://localhost:5173/oauth2/redirect
+
+  avatar:
+    dir: "E:\\nam4\\Project\\TeeHub-main\\perfect_react\\public\\Avatar"
+  product:
+    dir: "E:\\nam4\\Project\\TeeHub-main\\perfect_react\\public\\Productt"
+  custom:
+    dir: "E:\\nam4\\Project\\TeeHub-main\\perfect_react\\public\\CustomProduct"
+  external:
+    base-url: "http://localhost:8080"
+
+logging:
+  level:
+    org.springframework: DEBUG
+    org.springframework.security: TRACE
